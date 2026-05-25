@@ -22,11 +22,11 @@ GDT_Pointer :: struct #packed {
 }
 
 TSS_Entry :: struct #packed {
-	prev_tss, esp0, ss0, esp1, ss1, esp2, ss2:           u32,
-	cr3, eip, eflags, eax, ecx, edx, esp, ebp, eso, edi: u32,
-	es, cs, ss, ds, fs, gs, ldt:                         u32,
-	trap:                                                u16,
-	iomap_base:                                          u16,
+	prev_tss, esp0, ss0, esp1, ss1, esp2, ss2:                u32,
+	cr3, eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi: u32,
+	es, cs, ss, ds, fs, gs, ldt:                              u32,
+	trap:                                                     u16,
+	iomap_base:                                               u16,
 }
 
 KERNEL_STACK_SIZE :: 16 * 1024

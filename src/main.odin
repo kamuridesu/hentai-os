@@ -2,14 +2,6 @@ package main
 
 import "base:runtime"
 
-// Multiboot
-MAGIC :: 0x1BADB002
-FLAGS :: 0x00
-CHECKSUM :: ~(u32(MAGIC) + u32(FLAGS)) + 1
-
-@(export, link_section = ".multiboot")
-multiboot_header := [3]u32{MAGIC, FLAGS, CHECKSUM}
-
 
 panic_handler :: proc(prefix, message: string, loc: runtime.Source_Code_Location) -> ! {
 	vga_writer.color = build_color(.Light_Red, .Black)
@@ -28,39 +20,59 @@ panic_handler :: proc(prefix, message: string, loc: runtime.Source_Code_Location
 	for {}
 }
 
-@(export, link_name = "_start")
-_start :: proc "c" () -> ! {
-	context = {}
-	context.assertion_failure_proc = panic_handler
-
+_init :: proc() {
 	init_serial()
+	serial_print("Serial OK!\nStarting GDT... ")
 	init_gdt()
+	serial_print("OK!\nStarting IDT... ")
 	init_idt()
-	serial_print("IDT loaded successfully\n")
+	serial_print("OK!\nStarting PIC... ")
 	init_pic()
+	serial_print("OK!\nStarting paging... ")
 	init_paging()
+	serial_print("OK!\nEnabling interrupts... ")
 	enable_interrupts()
+	serial_print("OK!\n")
+}
 
+_vga_init :: proc() {
 	vga_writer.row = 0
 	vga_writer.col = 0
 	vga_writer.color = build_color(.Light_Green, .Black)
 	clear_screen()
+}
 
-	print_string("Hello World!\n")
-	print_string("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+@(export, link_name = "kernel_main")
+kernel_main :: proc "c" (magic: u32, mb_info: ^Multiboot_Info, kernel_end: u32) -> ! {
+	context = {}
+	context.assertion_failure_proc = panic_handler
 
-	// serial_print("Writing to unmapped mem...\n")
-	// bad_ptr := cast(^u32)uintptr(0xDEADBEEF)
-	// bad_ptr^ = 42
+	if magic != MULTIBOOT_BOOTLOADER_MAGIC {
+		for {}
+	}
+
+	_init()
+	_vga_init()
+
+	// Checks if mem_upper is valid
+	// GRUB almost aways sets it but the spec doesnt guarantee it
+	if mb_info.flags & (1 << 0) == 0 {
+		panic_handler("MULTIBOOT", "Memory info not provided", {})
+	}
+
+	total_memory_mb := (mb_info.mem_lower + mb_info.mem_upper) / 1024
+
+	print_string("System RAM detected: ")
+	print_u32(total_memory_mb)
+	print_string("MiB\n")
+
+	init_frame_allocator(mb_info, kernel_end)
+	serial_print("Frame allocator initialized\n")
+
 
 	run_tests()
-
 
 	for {
 		halt_cpu()
 	}
-}
-
-int3 :: proc() {
-	context.assertion_failure_proc("INT3", "Manual Breakpoint", {})
 }

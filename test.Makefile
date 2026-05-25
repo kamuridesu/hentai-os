@@ -1,6 +1,7 @@
 .PHONY: test test_normal test_panic test_double_fault test_page_fault test_run
 
 test: test_normal test_panic test_double_fault test_page_fault
+	@echo "=== ALL TESTS PASSED ==="
 
 test_normal:
 	@$(MAKE) EXTRA_FLAGS='-define:TEST_NORMAL=true' build link test_run

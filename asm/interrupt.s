@@ -5,7 +5,6 @@
 .global read_cr2
 .global trigger_divide_by_zero
 
-
 .global isr3_stub
 .global isr8_expected_stub
 .global isr14_stub
@@ -17,6 +16,7 @@
 .extern double_fault_handler
 .extern expected_double_fault_handler
 .extern page_fault_handler
+.extern expected_page_fault_handler
 .extern time_handler
 .extern keyboard_handler
 
@@ -73,7 +73,10 @@ isr14_stub:
     cld
     movl %esp, %ebp
     andl $0xFFFFFFF0, %esp
-    movl 32(%ebp), %eax /* Pass the error to the Odin handler, the error code is located at EBP + 32 */
+    subl $8, %esp
+    leal 36(%ebp), %eax
+    pushl %eax /* pass the pointer to the interrupt stack frame */
+    pushl 32(%ebp) /* Pass the error to the Odin handler, the error code is located at EBP + 32 */
     call page_fault_handler
     movl %ebp, %esp
     popal
@@ -85,10 +88,15 @@ isr14_expected_stub:
     cld
     movl %esp, %ebp
     andl $0xFFFFFFF0, %esp
-    call expected_page_fault_handler
+    subl $8, %esp
+    leal 36(%ebp), %eax
+    pushl %eax /* pass the pointer to the interrupt stack frame */
+    pushl 32(%ebp) /* Pass the error to the Odin handler, the error code is located at EBP + 32 */
+    call expected_page_fault_handler 
     movl %ebp, %esp
     popal
-    iret
+    addl $4, %esp /* Discard error code */
+    iret 
 
 isr32_stub:
     pushal

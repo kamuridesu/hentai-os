@@ -38,7 +38,7 @@ vga_writer: Writer
 // 0-7: ASCII chars
 // 8-11: Foreground color (4 bits)
 // 12-14: backgoround color (3 bits)
-// 14: blink
+// 15: blink
 build_color :: proc(fg: Color, bg: Color) -> u16 {
 	return (u16(fg) << 8) | (u16(bg) << 12)
 }

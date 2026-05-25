@@ -87,10 +87,22 @@ test_should_trigger_page_fault :: proc() {
 	serial_print("[OK]\n")
 }
 
+test_should_allocate_3_physical_frames :: proc() {
+	defer serial_print("[OK]\n")
+	serial_print("Allocating 3 Physical Frames... ")
+
+	frame1 := allocate_frame()
+	assert(cast(u32)frame1 == 0x400000)
+
+	frame2 := allocate_frame()
+	assert(cast(u32)frame2 == 0x401000)
+
+	frame3 := allocate_frame()
+	assert(cast(u32)frame3 == 0x402000)
+}
+
 run_tests :: proc() {
 	defer exit_qemu(.Success)
-	defer serial_print("=== ALL TESTS PASSED ===\n")
-
 	serial_print("=== RUNNING KERNEL TESTS ===\n")
 
 	when TEST_NORMAL {
@@ -100,6 +112,7 @@ run_tests :: proc() {
 		test_println_many()
 		test_println_output()
 		test_shouldtrigger_breakpoint_and_recover()
+		test_should_allocate_3_physical_frames()
 	} else when TEST_PANIC {
 		test_should_fail()
 	} else when TEST_DOUBLE_FAULT {

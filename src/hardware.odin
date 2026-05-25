@@ -49,3 +49,47 @@ serial_print :: proc(s: string) {
 		serial_write_byte(s[i])
 	}
 }
+
+serial_print_u32 :: proc(n: u32) {
+	if n == 0 {
+		serial_write_byte('0')
+		return
+	}
+
+	buf: [16]byte
+	i := 15
+	num := n
+
+	for num > 0 {
+		buf[i] = '0' + byte(num % 10)
+		num /= 10
+		i -= 1
+	}
+
+	for j in i + 1 ..= 15 {
+		serial_write_byte(buf[j])
+	}
+}
+
+serial_print_hex :: proc(n: u32) {
+	serial_print("0x")
+	if n == 0 {
+		serial_write_byte('0')
+		return
+	}
+
+	hex_chars := "0123456789ABCDEF"
+	buf: [8]byte
+	i := 7
+	num := n
+
+	for num > 0 {
+		buf[i] = hex_chars[num % 16]
+		num /= 16
+		i -= 1
+	}
+
+	for j in i + 1 ..= 7 {
+		serial_write_byte(buf[j])
+	}
+}
