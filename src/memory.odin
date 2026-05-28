@@ -44,5 +44,5 @@ allocate_frame :: proc() -> u64 {
 		frame_allocator.current_mmap_offset += entry.size + 4
 	}
 
-	panic_handler("MEMORY", "Out of Physical Memory (OOM)", {})
+	panic("Out of Physical Memory (OOM)")
 }

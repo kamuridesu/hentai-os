@@ -15,7 +15,7 @@ Multiboot_Info :: struct #packed {
 	// 2 -> cmdline is valid
 	// 3 -> mods_count/mods_addr are valid
 	// 4 -> syms (a.out symble table) is valid
-	// 5 -> sums (ELF section headers) is valid
+	// 5 -> syms (ELF section headers) is valid
 	// 6 -> mmap_length/mmap_addr are valid
 	// 7 -> drives_length/drives_addr are valid
 	// 8 -> config_table is valid

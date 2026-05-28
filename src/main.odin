@@ -30,9 +30,6 @@ _init :: proc() {
 	init_pic()
 	serial_print("OK!\nStarting paging... ")
 	init_paging()
-	serial_print("OK!\nEnabling interrupts... ")
-	enable_interrupts()
-	serial_print("OK!\n")
 }
 
 _vga_init :: proc() {
@@ -57,7 +54,7 @@ kernel_main :: proc "c" (magic: u32, mb_info: ^Multiboot_Info, kernel_end: u32) 
 	// Checks if mem_upper is valid
 	// GRUB almost aways sets it but the spec doesnt guarantee it
 	if mb_info.flags & (1 << 0) == 0 {
-		panic_handler("MULTIBOOT", "Memory info not provided", {})
+		panic("Memory info not provided")
 	}
 
 	total_memory_mb := (mb_info.mem_lower + mb_info.mem_upper) / 1024
@@ -68,6 +65,10 @@ kernel_main :: proc "c" (magic: u32, mb_info: ^Multiboot_Info, kernel_end: u32) 
 
 	init_frame_allocator(mb_info, kernel_end)
 	serial_print("Frame allocator initialized\n")
+
+	serial_print("OK!\nEnabling interrupts... ")
+	enable_interrupts()
+	serial_print("OK!\n")
 
 
 	run_tests()

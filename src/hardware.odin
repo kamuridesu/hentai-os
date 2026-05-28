@@ -8,7 +8,6 @@ foreign ports {
 	out32 :: proc(port: u16, value: u32) ---
 	trigger_breakpoint :: proc() ---
 	inb :: proc(port: u16) -> u8 ---
-
 }
 
 Qemu_Exit_Code :: enum u32 {

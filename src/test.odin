@@ -101,6 +101,16 @@ test_should_allocate_3_physical_frames :: proc() {
 	assert(cast(u32)frame3 == 0x402000)
 }
 
+test_should_trigger_OOM :: proc() {
+	serial_print("Allocating Physical Frames to trigger OOM...")
+	context.assertion_failure_proc = expected_panic_handler
+	for {
+		allocate_frame()
+	}
+	serial_print("[FAIL] Could not trigger OOM...")
+	exit_qemu(.Failed)
+}
+
 run_tests :: proc() {
 	defer exit_qemu(.Success)
 	serial_print("=== RUNNING KERNEL TESTS ===\n")
@@ -113,6 +123,7 @@ run_tests :: proc() {
 		test_println_output()
 		test_shouldtrigger_breakpoint_and_recover()
 		test_should_allocate_3_physical_frames()
+		test_should_trigger_OOM()
 	} else when TEST_PANIC {
 		test_should_fail()
 	} else when TEST_DOUBLE_FAULT {
