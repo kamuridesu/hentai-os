@@ -1,4 +1,4 @@
-package main
+package boot
 
 MULTIBOOT_BOOTLOADER_MAGIC :: 0x2BADB002
 MAGIC :: 0x1BADB002

@@ -1,4 +1,6 @@
-package main
+package memory
+
+import "../hardware/"
 
 foreign import "paging.o"
 @(default_calling_convention = "c")
@@ -37,5 +39,5 @@ init_paging :: proc() {
 	load_page_directory(&page_directory.entries[0])
 	enable_paging()
 
-	df_tss.cr3 = cast(u32)uintptr(&page_directory.entries[0])
+	hardware.df_tss.cr3 = cast(u32)uintptr(&page_directory.entries[0])
 }

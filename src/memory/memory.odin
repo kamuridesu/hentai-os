@@ -1,4 +1,6 @@
-package main
+package memory
+
+import "../boot"
 
 PAGE_SIZE :: 4096
 
@@ -11,7 +13,7 @@ Frame_Allocator :: struct {
 
 frame_allocator: Frame_Allocator
 
-init_frame_allocator :: proc(mb_info: ^Multiboot_Info, kernel_end: u32) {
+init_frame_allocator :: proc(mb_info: ^boot.Multiboot_Info, kernel_end: u32) {
 	frame_allocator.mmap_addr = mb_info.mmap_addr
 	frame_allocator.mmap_length = mb_info.mmap_length
 
@@ -24,7 +26,7 @@ init_frame_allocator :: proc(mb_info: ^Multiboot_Info, kernel_end: u32) {
 allocate_frame :: proc() -> u64 {
 
 	for frame_allocator.current_mmap_offset < frame_allocator.mmap_length {
-		entry := cast(^Multiboot_Mmap_Entry)uintptr(
+		entry := cast(^boot.Multiboot_Mmap_Entry)uintptr(
 			frame_allocator.mmap_addr + frame_allocator.current_mmap_offset,
 		)
 		if entry.type == 1 { 	// usable RAM

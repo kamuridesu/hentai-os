@@ -1,4 +1,4 @@
-package main
+package hardware
 
 foreign import "interrupts.o"
 @(default_calling_convention = "c")

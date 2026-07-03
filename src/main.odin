@@ -1,50 +1,58 @@
 package main
 
 import "base:runtime"
+@(require) import "math"
+_ :: math
+@(require) import "hardware/io"
+_ :: io
 
+import "boot"
+import "hardware"
+import "memory"
+import "vga"
 
 panic_handler :: proc(prefix, message: string, loc: runtime.Source_Code_Location) -> ! {
-	vga_writer.color = build_color(.Light_Red, .Black)
+	vga.vga_writer.color = vga.build_color(.Light_Red, .Black)
 
-	print_string("\nKERNEL PANIC: ")
-	print_string(message)
+	vga.print_string("\nKERNEL PANIC: ")
+	vga.print_string(message)
 
-	serial_print("\n[FAILED] Kernel Panic at")
-	serial_print(loc.file_path)
-	serial_print("\nMessage: ")
-	serial_print(message)
-	serial_print("\n")
+	hardware.serial_print("\n[FAILED] Kernel Panic at")
+	hardware.serial_print(loc.file_path)
+	hardware.serial_print("\nMessage: ")
+	hardware.serial_print(message)
+	hardware.serial_print("\n")
 
-	exit_qemu(.Failed)
+	hardware.exit_qemu(.Failed)
 
 	for {}
 }
 
 _init :: proc() {
-	init_serial()
-	serial_print("Serial OK!\nStarting GDT... ")
-	init_gdt()
-	serial_print("OK!\nStarting IDT... ")
-	init_idt()
-	serial_print("OK!\nStarting PIC... ")
-	init_pic()
-	serial_print("OK!\nStarting paging... ")
-	init_paging()
+	hardware.init_serial()
+	hardware.serial_print("Serial OK!\nStarting GDT... ")
+	hardware.init_gdt()
+	hardware.serial_print("OK!\nStarting IDT... ")
+	hardware.init_idt()
+	hardware.serial_print("OK!\nStarting PIC... ")
+	hardware.init_pic()
+	hardware.serial_print("OK!\nStarting paging... ")
+	memory.init_paging()
 }
 
 _vga_init :: proc() {
-	vga_writer.row = 0
-	vga_writer.col = 0
-	vga_writer.color = build_color(.Light_Green, .Black)
-	clear_screen()
+	vga.vga_writer.row = 0
+	vga.vga_writer.col = 0
+	vga.vga_writer.color = vga.build_color(.Light_Green, .Black)
+	vga.clear_screen()
 }
 
 @(export, link_name = "kernel_main")
-kernel_main :: proc "c" (magic: u32, mb_info: ^Multiboot_Info, kernel_end: u32) -> ! {
+kernel_main :: proc "c" (magic: u32, mb_info: ^boot.Multiboot_Info, kernel_end: u32) -> ! {
 	context = {}
 	context.assertion_failure_proc = panic_handler
 
-	if magic != MULTIBOOT_BOOTLOADER_MAGIC {
+	if magic != boot.MULTIBOOT_BOOTLOADER_MAGIC {
 		for {}
 	}
 
@@ -59,21 +67,21 @@ kernel_main :: proc "c" (magic: u32, mb_info: ^Multiboot_Info, kernel_end: u32) 
 
 	total_memory_mb := (mb_info.mem_lower + mb_info.mem_upper) / 1024
 
-	print_string("System RAM detected: ")
-	print_u32(total_memory_mb)
-	print_string("MiB\n")
+	vga.print_string("System RAM detected: ")
+	vga.print_u32(total_memory_mb)
+	vga.print_string("MiB\n")
 
-	init_frame_allocator(mb_info, kernel_end)
-	serial_print("Frame allocator initialized\n")
+	memory.init_frame_allocator(mb_info, kernel_end)
+	hardware.serial_print("Frame allocator initialized\n")
 
-	serial_print("OK!\nEnabling interrupts... ")
-	enable_interrupts()
-	serial_print("OK!\n")
+	hardware.serial_print("OK!\nEnabling interrupts... ")
+	hardware.enable_interrupts()
+	hardware.serial_print("OK!\n")
 
 
 	run_tests()
 
 	for {
-		halt_cpu()
+		hardware.halt_cpu()
 	}
 }

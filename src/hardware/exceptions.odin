@@ -1,4 +1,6 @@
-package main
+package hardware
+
+import "../hardware"
 
 Page_Fault_Flag :: enum u32 {
 	Present           = 0,
@@ -19,8 +21,8 @@ Interrupt_Stack_Frame :: struct #packed {
 @(export, link_name = "expected_double_fault_handler")
 expected_double_fault_handler :: proc "c" () {
 	context = {}
-	serial_print("[OK]\n")
-	exit_qemu(.Success)
+	hardware.serial_print("[OK]\n")
+	hardware.exit_qemu(.Success)
 	for {
 		halt_cpu()
 	}
@@ -29,8 +31,8 @@ expected_double_fault_handler :: proc "c" () {
 @(export, link_name = "double_fault_handler")
 double_fault_handler :: proc "c" () {
 	context = {}
-	serial_print("\n >>> EXCEPTION CAUGHT: DOUBLE FAULT (INT 8) <<<\n")
-	exit_qemu(.Failed)
+	hardware.serial_print("\n >>> EXCEPTION CAUGHT: DOUBLE FAULT (INT 8) <<<\n")
+	hardware.exit_qemu(.Failed)
 	for {
 		halt_cpu()
 	}
@@ -39,47 +41,47 @@ double_fault_handler :: proc "c" () {
 @(export, link_name = "breakpoint_handler")
 breakpoint_handler :: proc "c" () {
 	context = {}
-	serial_print("\n>>> EXCEPTION CAUGHT: BREAKPOINT (INT 3) <<<\n")
+	hardware.serial_print("\n>>> EXCEPTION CAUGHT: BREAKPOINT (INT 3) <<<\n")
 }
 
 print_page_fault_info :: proc(error_code: u32, frame: ^Interrupt_Stack_Frame) {
 
 	error := transmute(Page_Fault_Error_Code)error_code
-	serial_print("\n >>> EXCEPTION CAUGHT: PAGE FAULT (INT 14) <<<\n")
+	hardware.serial_print("\n >>> EXCEPTION CAUGHT: PAGE FAULT (INT 14) <<<\n")
 
-	serial_print("Accessed Address : ")
-	serial_print_hex(read_cr2())
-	serial_print("\n")
+	hardware.serial_print("Accessed Address : ")
+	hardware.serial_print_hex(read_cr2())
+	hardware.serial_print("\n")
 
-	serial_print("Instruction      : ")
-	serial_print_hex(frame.eip)
-	serial_print("\n")
+	hardware.serial_print("Instruction      : ")
+	hardware.serial_print_hex(frame.eip)
+	hardware.serial_print("\n")
 
-	serial_print("EFLAGS           : ")
-	serial_print_hex(frame.eflags)
-	serial_print("\n")
+	hardware.serial_print("EFLAGS           : ")
+	hardware.serial_print_hex(frame.eflags)
+	hardware.serial_print("\n")
 
-	serial_print("Error Code       : ")
-	serial_print_hex(error_code)
-	serial_print(" [ ")
+	hardware.serial_print("Error Code       : ")
+	hardware.serial_print_hex(error_code)
+	hardware.serial_print(" [ ")
 	if .Present in error {
-		serial_print("protection-violation ")
+		hardware.serial_print("protection-violation ")
 	} else {
-		serial_print("not-present ")
+		hardware.serial_print("not-present ")
 	}
 	if .Write in error {
-		serial_print("write ")
+		hardware.serial_print("write ")
 	}
 	if .User in error {
-		serial_print("user ")
+		hardware.serial_print("user ")
 	}
 	if .Reserved_Write in error {
-		serial_print("reserved-write ")
+		hardware.serial_print("reserved-write ")
 	}
 	if .Instruction_Fetch in error {
-		serial_print("instruction-fetch ")
+		hardware.serial_print("instruction-fetch ")
 	}
-	serial_print("]\n")
+	hardware.serial_print("]\n")
 }
 
 @(export, link_name = "page_fault_handler")
@@ -88,7 +90,7 @@ page_fault_handler :: proc "c" (error_code: u32, frame: ^Interrupt_Stack_Frame) 
 	print_page_fault_info(error_code, frame)
 
 	// For now lets just quit as Fatal
-	exit_qemu(.Failed)
+	hardware.exit_qemu(.Failed)
 	for {
 		halt_cpu()
 	}
@@ -99,8 +101,8 @@ expected_page_fault_handler :: proc "c" (error_code: u32, frame: ^Interrupt_Stac
 	context = {}
 	print_page_fault_info(error_code, frame)
 
-	serial_print("[OK]\n")
-	exit_qemu(.Success)
+	hardware.serial_print("[OK]\n")
+	hardware.exit_qemu(.Success)
 	for {
 		halt_cpu()
 	}
@@ -109,5 +111,5 @@ expected_page_fault_handler :: proc "c" (error_code: u32, frame: ^Interrupt_Stac
 @(export, link_name = "time_handler")
 time_handler :: proc "c" () {
 	context = {}
-	pic_send_eoi(0)
+	hardware.pic_send_eoi(0)
 }

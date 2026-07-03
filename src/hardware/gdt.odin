@@ -1,4 +1,5 @@
-package main
+package hardware
+
 
 foreign import "gdt.o"
 @(default_calling_convention = "c")

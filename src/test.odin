@@ -2,6 +2,9 @@ package main
 
 import "base:intrinsics"
 import "base:runtime"
+import "hardware"
+import "memory"
+import "vga"
 
 TEST_NORMAL :: #config(TEST_NORMAL, false)
 TEST_PANIC :: #config(TEST_PANIC, false)
@@ -9,111 +12,111 @@ TEST_DOUBLE_FAULT :: #config(TEST_DOUBLE_FAULT, false)
 TEST_PAGE_FAULT :: #config(TEST_PAGE_FAULT, false)
 
 expected_panic_handler :: proc(prefix, message: string, loc: runtime.Source_Code_Location) -> ! {
-	serial_print("[OK]\n")
-	exit_qemu(.Success)
+	hardware.serial_print("[OK]\n")
+	hardware.exit_qemu(.Success)
 	for {}
 }
 
 test_vga_bounds :: proc() {
-	serial_print("Testing VGA bounds...")
-	assert(VGA_WIDTH == 80)
-	assert(VGA_HEIGHT == 25)
-	serial_print("[OK]\n")
+	hardware.serial_print("Testing VGA bounds...")
+	assert(vga.VGA_WIDTH == 80)
+	assert(vga.VGA_HEIGHT == 25)
+	hardware.serial_print("[OK]\n")
 }
 
 test_math :: proc() {
-	serial_print("Testing basic math...")
+	hardware.serial_print("Testing basic math...")
 	assert(1 + 1 == 2)
-	serial_print("[OK]\n")
+	hardware.serial_print("[OK]\n")
 }
 
 test_println_simple :: proc() {
-	serial_print("Testing simple println...")
-	println("test_println")
-	serial_print("[OK]\n")
+	hardware.serial_print("Testing simple println...")
+	vga.println("test_println")
+	hardware.serial_print("[OK]\n")
 }
 
 test_println_many :: proc() {
-	serial_print("Testing many print...")
+	hardware.serial_print("Testing many print...")
 	for _ in 0 ..< 200 {
-		println("test_print_many")
+		vga.println("test_print_many")
 	}
-	serial_print("[OK]\n")
+	hardware.serial_print("[OK]\n")
 }
 
 test_println_output :: proc() {
-	serial_print("Testing println output...")
+	hardware.serial_print("Testing println output...")
 
 	s := "Some test string that fits on a single line"
-	println(s)
+	vga.println(s)
 
-	target_row := vga_writer.row - 1
+	target_row := vga.vga_writer.row - 1
 	for i in 0 ..< len(s) {
-		index := target_row * VGA_WIDTH + i
-		char_data := intrinsics.volatile_load(&VGA_BUFFER[index])
+		index := target_row * vga.VGA_WIDTH + i
+		char_data := intrinsics.volatile_load(&vga.VGA_BUFFER[index])
 		char_byte := byte(char_data & 0xFF)
 
 		assert(char_byte == s[i])
 	}
 
-	serial_print("[OK]\n")
+	hardware.serial_print("[OK]\n")
 }
 
 test_should_fail :: proc() {
-	serial_print("Test should panic...")
+	hardware.serial_print("Test should panic...")
 
 	context.assertion_failure_proc = expected_panic_handler
 	assert(1 == 0)
 }
 
 test_shouldtrigger_breakpoint_and_recover :: proc() {
-	serial_print("Triggering a breakpoint exception...\n")
-	trigger_breakpoint()
-	serial_print("[OK]\n")
+	hardware.serial_print("Triggering a breakpoint exception...\n")
+	hardware.trigger_breakpoint()
+	hardware.serial_print("[OK]\n")
 }
 
 test_should_throw_exception :: proc() {
-	serial_print("Triggering a Devide By Zero to cause a Double Fault...\n")
-	set_idt_gate(8, cast(u32)uintptr(rawptr(isr8_expected_stub)), 0x08, 0x8E)
-	trigger_divide_by_zero()
-	serial_print("[OK]\n")
+	hardware.serial_print("Triggering a Devide By Zero to cause a Double Fault...\n")
+	hardware.set_idt_gate(8, cast(u32)uintptr(rawptr(hardware.isr8_expected_stub)), 0x08, 0x8E)
+	hardware.trigger_divide_by_zero()
+	hardware.serial_print("[OK]\n")
 }
 
 test_should_trigger_page_fault :: proc() {
-	serial_print("Triggering a Page fault exception...\n")
-	set_idt_gate(14, cast(u32)uintptr(rawptr(isr14_expected_stub)), 0x08, 0x8E)
+	hardware.serial_print("Triggering a Page fault exception...\n")
+	hardware.set_idt_gate(14, cast(u32)uintptr(rawptr(hardware.isr14_expected_stub)), 0x08, 0x8E)
 	bad_ptr := cast(^u32)uintptr(0xDEADBEEF)
 	bad_ptr^ = 42
-	serial_print("[OK]\n")
+	hardware.serial_print("[OK]\n")
 }
 
 test_should_allocate_3_physical_frames :: proc() {
-	defer serial_print("[OK]\n")
-	serial_print("Allocating 3 Physical Frames... ")
+	defer hardware.serial_print("[OK]\n")
+	hardware.serial_print("Allocating 3 Physical Frames... ")
 
-	frame1 := allocate_frame()
+	frame1 := memory.allocate_frame()
 	assert(cast(u32)frame1 == 0x400000)
 
-	frame2 := allocate_frame()
+	frame2 := memory.allocate_frame()
 	assert(cast(u32)frame2 == 0x401000)
 
-	frame3 := allocate_frame()
+	frame3 := memory.allocate_frame()
 	assert(cast(u32)frame3 == 0x402000)
 }
 
 test_should_trigger_OOM :: proc() {
-	serial_print("Allocating Physical Frames to trigger OOM...")
+	hardware.serial_print("Allocating Physical Frames to trigger OOM...")
 	context.assertion_failure_proc = expected_panic_handler
 	for {
-		allocate_frame()
+		memory.allocate_frame()
 	}
-	serial_print("[FAIL] Could not trigger OOM...")
-	exit_qemu(.Failed)
+	hardware.serial_print("[FAIL] Could not trigger OOM...")
+	hardware.exit_qemu(.Failed)
 }
 
 run_tests :: proc() {
-	defer exit_qemu(.Success)
-	serial_print("=== RUNNING KERNEL TESTS ===\n")
+	defer hardware.exit_qemu(.Success)
+	hardware.serial_print("=== RUNNING KERNEL TESTS ===\n")
 
 	when TEST_NORMAL {
 		test_vga_bounds()

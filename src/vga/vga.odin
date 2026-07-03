@@ -1,5 +1,6 @@
-package main
+package vga
 
+import "../hardware"
 import "base:intrinsics"
 
 Color :: enum u8 {
@@ -110,21 +111,21 @@ clear_screen :: proc() {
 }
 
 print_string :: proc(s: string) {
-	disable_interrupts()
-	defer enable_interrupts()
+	hardware.disable_interrupts()
+	defer hardware.enable_interrupts()
 	write_string(&vga_writer, s)
 }
 
 println :: proc(s: string) {
-	disable_interrupts()
-	defer enable_interrupts()
+	hardware.disable_interrupts()
+	defer hardware.enable_interrupts()
 	write_string(&vga_writer, s)
 	new_line(&vga_writer)
 }
 
 print_u32 :: proc(n: u32) {
-	disable_interrupts()
-	defer enable_interrupts()
+	hardware.disable_interrupts()
+	defer hardware.enable_interrupts()
 	if n == 0 {
 		write_byte(&vga_writer, '0')
 		return
@@ -146,8 +147,8 @@ print_u32 :: proc(n: u32) {
 }
 
 print_hex :: proc(n: u32) {
-	disable_interrupts()
-	defer enable_interrupts()
+	hardware.disable_interrupts()
+	defer hardware.enable_interrupts()
 	print_string("0x")
 	if n == 0 {
 		write_byte(&vga_writer, '0')

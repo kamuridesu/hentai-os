@@ -1,4 +1,7 @@
-package main
+package keyboard
+
+import "../../hardware"
+import "../../vga"
 
 scancode_chars := [?]byte {
 	0,
@@ -64,14 +67,14 @@ scancode_chars := [?]byte {
 @(export, link_name = "keyboard_handler")
 keyboard_handler :: proc "c" () {
 	context = {}
-	scancode := inb(0x60)
+	scancode := hardware.inb(0x60)
 
 	if scancode < 0x80 {
 		char := scancode_chars[scancode]
 		if char != 0 {
 			buf := [2]byte{char, 0}
-			print_string(string(buf[:1]))
+			vga.print_string(string(buf[:1]))
 		}
 	}
-	pic_send_eoi(1)
+	hardware.pic_send_eoi(1)
 }

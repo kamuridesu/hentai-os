@@ -1,4 +1,4 @@
-package main
+package hardware
 
 PIC1_COMMAND :: 0x20
 PIC1_DATA :: 0x21
